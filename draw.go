@@ -15,29 +15,29 @@ func (image Image) DrawPolygons(p *Matrix, c Color) {
 	m := p.mat
 	cnew := c
 	for i := 0; i < p.cols-2; i += 3 {
-		v1 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+1], m[1][i+1], m[2][i+1])
-		v2 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+2], m[1][i+2], m[2][i+2])
+		p0 := []float64{
+			m[0][i],
+			m[1][i],
+			m[2][i],
+		}
+		p1 := []float64{
+			m[0][i+1],
+			m[1][i+1],
+			m[2][i+1],
+		}
+		p2 := []float64{
+			m[0][i+2],
+			m[1][i+2],
+			m[2][i+2],
+		}
+		v1 := MakeVector(p0[0], p0[1], p0[2], p1[0], p1[1], p1[2])
+		v2 := MakeVector(p0[0], p0[1], p0[2], p2[0], p2[1], p2[2])
 		cross, err := CrossProduct(v1, v2)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 		if cross[2] > 0 {
-			p0 := []float64{
-				m[0][i],
-				m[1][i],
-				m[2][i],
-			}
-			p1 := []float64{
-				m[0][i+1],
-				m[1][i+1],
-				m[2][i+1],
-			}
-			p2 := []float64{
-				m[0][i+2],
-				m[1][i+2],
-				m[2][i+2],
-			}
 			cnew = Color{
 				r: cnew.r + 37%255,
 				g: cnew.g + 67%255,
