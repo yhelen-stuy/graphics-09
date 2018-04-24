@@ -182,6 +182,9 @@ func ParseFile(filename string, t *Matrix, p *Matrix, e *Matrix, image *Image) e
 			image.DrawPolygons(p, Color{r: 0, b: 255, g: 0})
 			p = MakeMatrix(4, 0)
 
+		case "clear":
+			image.Clear()
+
 		case "display":
 			image.Display()
 
