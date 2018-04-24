@@ -7,25 +7,90 @@ import (
 )
 
 const (
-	sphereStepSize float64 = 1.0 / 20
+	sphereStepSize float64 = 1.0 / 10
 	torusStepSize  float64 = 1.0 / 20
 )
 
 func (image Image) DrawPolygons(p *Matrix, c Color) {
 	m := p.mat
+	cnew := c
 	for i := 0; i < p.cols-2; i += 3 {
-		p1 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+1], m[1][i+1], m[2][i+1])
-		p2 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+2], m[1][i+2], m[2][i+2])
-		cross, err := CrossProduct(p1, p2)
+		v1 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+1], m[1][i+1], m[2][i+1])
+		v2 := MakeVector(m[0][i], m[1][i], m[2][i], m[0][i+2], m[1][i+2], m[2][i+2])
+		cross, err := CrossProduct(v1, v2)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 		if cross[2] > 0 {
-			image.DrawLine(c, int(m[0][i]), int(m[1][i]), int(m[0][i+1]), int(m[1][i+1]))
-			image.DrawLine(c, int(m[0][i+1]), int(m[1][i+1]), int(m[0][i+2]), int(m[1][i+2]))
-			image.DrawLine(c, int(m[0][i+2]), int(m[1][i+2]), int(m[0][i]), int(m[1][i]))
+			p0 := []float64{
+				m[0][i],
+				m[1][i],
+				m[2][i],
+			}
+			p1 := []float64{
+				m[0][i+1],
+				m[1][i+1],
+				m[2][i+1],
+			}
+			p2 := []float64{
+				m[0][i+2],
+				m[1][i+2],
+				m[2][i+2],
+			}
+			cnew = Color{
+				r: cnew.r + 37%255,
+				g: cnew.g + 67%255,
+				b: cnew.b + 59%255,
+			}
+			image.scanline(p0, p1, p2, cnew)
+			image.DrawLine(c, int(p0[0]), int(p0[1]), int(p1[0]), int(p1[1]))
+			image.DrawLine(c, int(p1[0]), int(p1[1]), int(p2[0]), int(p2[1]))
+			image.DrawLine(c, int(p2[0]), int(p2[1]), int(p0[0]), int(p0[1]))
 		}
+	}
+}
+
+func (image Image) scanline(p0, p1, p2 []float64, c Color) {
+	// Sort points
+	if p1[1] < p0[1] {
+		p0, p1 = p1, p0
+	}
+
+	if p2[1] < p1[1] {
+		p1, p2 = p2, p1
+	}
+
+	if p1[1] < p0[1] {
+		p0, p1 = p1, p0
+	}
+
+	if p0[1] == p1[1] && p0[0] > p1[0] {
+		p0, p1 = p1, p0
+	}
+
+	if p1[1] == p2[1] && p1[0] > p2[0] {
+		p2, p1 = p1, p2
+	}
+
+	// BM
+	x0 := p0[0]
+	x1 := x0
+	d0 := (p2[0] - p0[0]) / (p2[1] - p0[1])
+	d1 := (p1[0] - p0[0]) / (p1[1] - p0[1])
+	for y := int(p0[1]); y < int(p1[1]); y++ {
+		image.DrawLine(c, int(x0), y, int(x1), y)
+		x0 += d0
+		x1 += d1
+	}
+
+	// MT
+	d0 = (p2[0] - p0[0]) / (p2[1] - p0[1])
+	d1 = (p2[0] - p1[0]) / (p2[1] - p1[1])
+	for y := int(p1[1]); y < int(p2[1]); y++ {
+		image.DrawLine(c, int(x0), y, int(x1), y)
+		x0 += d0
+		x1 += d1
 	}
 }
 
@@ -294,11 +359,17 @@ func (m *Matrix) AddSphere(cx, cy, cz, r float64) {
 
 func generateSpherePoints(cx, cy, cz, r float64) *Matrix {
 	m := MakeMatrix(4, 0)
+	var end float64
 	// Rotating
-	for i := 0.0; i <= 1+sphereStepSize; i += sphereStepSize {
+	if sphereStepSize > 10 {
+		end = 1 + sphereStepSize
+	} else {
+		end = 1.0
+	}
+	for i := 0.0; i <= end; i += sphereStepSize {
 		phi := 2.0 * math.Pi * i
 		// Semicircle
-		for j := 0.0; j <= 1+sphereStepSize; j += sphereStepSize {
+		for j := 0.0; j <= end; j += sphereStepSize {
 			theta := math.Pi * j
 			x := r*math.Cos(theta) + cx
 			y := r*math.Sin(theta)*math.Cos(phi) + cy
@@ -339,11 +410,17 @@ func (m *Matrix) AddTorus(cx, cy, cz, r1, r2 float64) {
 // r2: Radius of torus
 func generateTorusPoints(cx, cy, cz, r1, r2 float64) *Matrix {
 	m := MakeMatrix(4, 0)
+	var end float64
+	if torusStepSize > 10 {
+		end = 1 + torusStepSize
+	} else {
+		end = 1.0
+	}
 	// Rotating
-	for i := 0.0; i < 1+torusStepSize; i += torusStepSize {
+	for i := 0.0; i < end; i += end {
 		phi := 2.0 * math.Pi * i
 		// Circle
-		for j := 0.0; j < 1+torusStepSize; j += torusStepSize {
+		for j := 0.0; j < end; j += end {
 			theta := 2.0 * math.Pi * j
 			x := math.Cos(phi)*(r1*math.Cos(theta)+r2) + cx
 			y := r1*math.Sin(theta) + cy

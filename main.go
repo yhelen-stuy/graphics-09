@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	image := MakeImage(500, 500)
+	image := MakeImage(1000, 1000)
 	t := MakeMatrix(4, 4)
 	t.Ident()
 	e := MakeMatrix(4, 0)
