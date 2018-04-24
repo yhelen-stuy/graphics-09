@@ -16,14 +16,17 @@ type Color struct {
 
 type Image struct {
 	img    [][]Color
+	zBuf   [][]float64
 	height int
 	width  int
 }
 
 func MakeImage(height, width int) *Image {
 	img := make([][]Color, height)
+	zBuf := make([][]float64, height)
 	for i := range img {
 		img[i] = make([]Color, width)
+		zBuf[i] = make([][]float64, width)
 	}
 	image := &Image{
 		img:    img,
@@ -34,11 +37,15 @@ func MakeImage(height, width int) *Image {
 	return image
 }
 
-func (image Image) plot(c Color, x, y int) error {
+// Should switch x and y l o l
+func (image Image) plot(c Color, x, y int, z float64) error {
 	if x < 0 || x > image.height || y < 0 || y > image.width {
 		return errors.New("Error: Coordinate invalid")
 	}
-	image.img[x][y] = c
+	if z > zBuf[x][y] {
+		image.img[x][y] = c
+		image.zBuf[x][y] = z
+	}
 	return nil
 }
 

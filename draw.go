@@ -96,7 +96,8 @@ func (image Image) DrawLines(edges *Matrix, c Color) {
 	}
 }
 
-func (image Image) DrawLine(c Color, x0, y0, x1, y1 int) error {
+// TODO: Calculate & Plot z
+func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 float64) error {
 	if x0 < 0 || y0 < 0 || x1 > image.width || y1 > image.height {
 		return errors.New("Error: Coordinates out of bounds")
 	}
@@ -107,86 +108,71 @@ func (image Image) DrawLine(c Color, x0, y0, x1, y1 int) error {
 
 	deltaX := x1 - x0
 	deltaY := y1 - y0
+	lA := deltaY
+	lB := deltaX * -1
 	if deltaY >= 0 {
 		if math.Abs(float64(deltaY)) <= math.Abs(float64(deltaX)) {
-			image.drawLineOctant1(c, deltaY, deltaX*-1, x0, y0, x1, y1)
+			// Octant 1 and 5
+			lD := 2*lA + lB
+			for x := x0; x <= x1; x++ {
+				err := image.plot(c, x, y)
+				if err != nil {
+					return err
+				}
+				if lD > 0 {
+					y++
+					lD += 2 * lB
+				}
+				lD += 2 * lA
+			}
 		} else {
-			image.drawLineOctant2(c, deltaY, deltaX*-1, x0, y0, x1, y1)
+			// Octant 2 and 6
+			x := x0
+			lD := lA + 2*lB
+			for y := y0; y <= y1; y++ {
+				err := image.plot(c, x, y)
+				if err != nil {
+					return err
+				}
+				if lD < 0 {
+					x++
+					lD += 2 * lA
+				}
+				lD += 2 * lB
+			}
 		}
 	} else {
 		if math.Abs(float64(deltaY)) > math.Abs(float64(deltaX)) {
-			image.drawLineOctant7(c, deltaY, deltaX*-1, x0, y0, x1, y1)
+			// Octant 7 and 3
+			x := x0
+			lD := lA - 2*lB
+			for y := y0; y >= y1; y-- {
+				err := image.plot(c, x, y)
+				if err != nil {
+					return err
+				}
+				if lD > 0 {
+					x++
+					lD += 2 * lA
+				}
+				lD -= 2 * lB
+			}
 		} else {
-			image.drawLineOctant8(c, deltaY, deltaX*-1, x0, y0, x1, y1)
+			// Octant 8 and 4
+			y := y0
+			lD := 2*lA - lB
+			for x := x0; x <= x1; x++ {
+				err := image.plot(c, x, y)
+				if err != nil {
+					return err
+				}
+				if lD < 0 {
+					y--
+					lD -= 2 * lB
+				}
+				lD += 2 * lA
+			}
 		}
-	}
-	return nil
-}
-
-func (image Image) drawLineOctant1(c Color, lA, lB, x0, y0, x1, y1 int) error {
-	y := y0
-	lD := 2*lA + lB
-	for x := x0; x <= x1; x++ {
-		err := image.plot(c, x, y)
-		if err != nil {
-			return err
-		}
-		if lD > 0 {
-			y++
-			lD += 2 * lB
-		}
-		lD += 2 * lA
-	}
-	return nil
-}
-
-func (image Image) drawLineOctant2(c Color, lA, lB, x0, y0, x1, y1 int) error {
-	x := x0
-	lD := lA + 2*lB
-	for y := y0; y <= y1; y++ {
-		err := image.plot(c, x, y)
-		if err != nil {
-			return err
-		}
-		if lD < 0 {
-			x++
-			lD += 2 * lA
-		}
-		lD += 2 * lB
-	}
-	return nil
-}
-
-func (image Image) drawLineOctant7(c Color, lA, lB, x0, y0, x1, y1 int) error {
-	x := x0
-	lD := lA - 2*lB
-	for y := y0; y >= y1; y-- {
-		err := image.plot(c, x, y)
-		if err != nil {
-			return err
-		}
-		if lD > 0 {
-			x++
-			lD += 2 * lA
-		}
-		lD -= 2 * lB
-	}
-	return nil
-}
-
-func (image Image) drawLineOctant8(c Color, lA, lB, x0, y0, x1, y1 int) error {
-	y := y0
-	lD := 2*lA - lB
-	for x := x0; x <= x1; x++ {
-		err := image.plot(c, x, y)
-		if err != nil {
-			return err
-		}
-		if lD < 0 {
-			y--
-			lD -= 2 * lB
-		}
-		lD += 2 * lA
 	}
 	return nil
 }
