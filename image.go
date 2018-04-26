@@ -56,11 +56,7 @@ func (image Image) plotNoZ(c Color, x, y int) error {
 		return errors.New("Error: Coordinate invalid")
 	}
 	image.img[x][y] = c
-	for y := 0; y < image.width; y++ {
-		for x := 0; x < image.height; x++ {
-			image.zBuf[x][y] = math.NaN()
-		}
-	}
+	image.zBuf[x][y] = -1 * math.MaxFloat64
 	return nil
 }
 
@@ -74,11 +70,6 @@ func (image Image) fill(c Color) {
 
 func (image Image) Clear() {
 	image.fill(Color{r: 255, g: 255, b: 255})
-	for y := 0; y < image.width; y++ {
-		for x := 0; x < image.height; x++ {
-			image.zBuf[x][y] = math.NaN()
-		}
-	}
 }
 
 func (image Image) SavePPM(filename string) error {

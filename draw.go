@@ -65,6 +65,14 @@ func (image Image) scanline(p0, p1, p2 []float64, c Color) {
 		p0, p1 = p1, p0
 	}
 
+	if p0[1] == p1[1] && p0[0] > p1[0] {
+		p0, p1 = p1, p0
+	}
+
+	if p1[1] == p2[1] && p1[0] > p2[0] {
+		p2, p1 = p1, p2
+	}
+
 	// BM
 	x0 := p0[0]
 	x1 := x0
@@ -76,7 +84,6 @@ func (image Image) scanline(p0, p1, p2 []float64, c Color) {
 	dz0 := (p2[2] - p0[2]) / (p2[1] - p0[1])
 	dz1 := (p1[2] - p0[2]) / (p1[1] - p0[1])
 	for y := int(p0[1]); y < int(p1[1]); y++ {
-		fmt.Println("Running BM")
 		image.DrawLine(c, int(x0), y, z0, int(x1), y, z1)
 		x0 += d0
 		x1 += d1
@@ -90,9 +97,8 @@ func (image Image) scanline(p0, p1, p2 []float64, c Color) {
 	d1 = (p2[0] - p1[0]) / (p2[1] - p1[1])
 
 	z1 = p1[2]
-	d1 = (p2[2] - p1[2]) / (p2[1] - p1[1])
+	dz1 = (p2[2] - p1[2]) / (p2[1] - p1[1])
 	for y := int(p1[1]); y < int(p2[1]); y++ {
-		fmt.Println("Running MT")
 		image.DrawLine(c, int(x0), y, z0, int(x1), y, z1)
 		x0 += d0
 		x1 += d1

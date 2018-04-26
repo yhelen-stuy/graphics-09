@@ -35,14 +35,10 @@ func ParseFile(filename string, t *Matrix, p *Matrix, e *Matrix, image *Image) e
 			s.Pop()
 
 		case "push":
-			// fmt.Println("Printing t")
-			// fmt.Println(t)
 			t := s.Peek()
 			if t != nil {
 				s.Push(t.Copy())
 			}
-			// fmt.Println("after push")
-			// fmt.Println(s)
 
 		case "ident":
 			t.Ident()
