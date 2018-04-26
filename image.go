@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 )
@@ -26,10 +27,11 @@ func MakeImage(height, width int) *Image {
 	zBuf := make([][]float64, height)
 	for i := range img {
 		img[i] = make([]Color, width)
-		zBuf[i] = make([][]float64, width)
+		zBuf[i] = make([]float64, width)
 	}
 	image := &Image{
 		img:    img,
+		zBuf:   zBuf,
 		height: height,
 		width:  width,
 	}
@@ -42,9 +44,22 @@ func (image Image) plot(c Color, x, y int, z float64) error {
 	if x < 0 || x > image.height || y < 0 || y > image.width {
 		return errors.New("Error: Coordinate invalid")
 	}
-	if z > zBuf[x][y] {
+	if math.IsNaN(image.zBuf[x][y]) || z > image.zBuf[x][y] {
 		image.img[x][y] = c
 		image.zBuf[x][y] = z
+	}
+	return nil
+}
+
+func (image Image) plotNoZ(c Color, x, y int) error {
+	if x < 0 || x > image.height || y < 0 || y > image.width {
+		return errors.New("Error: Coordinate invalid")
+	}
+	image.img[x][y] = c
+	for y := 0; y < image.width; y++ {
+		for x := 0; x < image.height; x++ {
+			image.zBuf[x][y] = math.NaN()
+		}
 	}
 	return nil
 }
@@ -52,13 +67,18 @@ func (image Image) plot(c Color, x, y int, z float64) error {
 func (image Image) fill(c Color) {
 	for y := 0; y < image.width; y++ {
 		for x := 0; x < image.height; x++ {
-			image.plot(c, x, y)
+			image.plotNoZ(c, x, y)
 		}
 	}
 }
 
 func (image Image) Clear() {
 	image.fill(Color{r: 255, g: 255, b: 255})
+	for y := 0; y < image.width; y++ {
+		for x := 0; x < image.height; x++ {
+			image.zBuf[x][y] = math.NaN()
+		}
+	}
 }
 
 func (image Image) SavePPM(filename string) error {

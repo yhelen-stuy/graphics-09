@@ -44,9 +44,9 @@ func (image Image) DrawPolygons(p *Matrix, c Color) {
 				b: cnew.b + 59%255,
 			}
 			image.scanline(p0, p1, p2, cnew)
-			image.DrawLine(cnew, int(p0[0]), int(p0[1]), int(p1[0]), int(p1[1]))
-			image.DrawLine(cnew, int(p1[0]), int(p1[1]), int(p2[0]), int(p2[1]))
-			image.DrawLine(cnew, int(p2[0]), int(p2[1]), int(p0[0]), int(p0[1]))
+			image.DrawLine(cnew, int(p0[0]), int(p0[1]), p0[2], int(p1[0]), int(p1[1]), p1[2])
+			image.DrawLine(cnew, int(p1[0]), int(p1[1]), p1[2], int(p2[0]), int(p2[1]), p2[2])
+			image.DrawLine(cnew, int(p2[0]), int(p2[1]), p2[2], int(p0[0]), int(p0[1]), p0[2])
 		}
 	}
 }
@@ -70,29 +70,41 @@ func (image Image) scanline(p0, p1, p2 []float64, c Color) {
 	x1 := x0
 	d0 := (p2[0] - p0[0]) / (p2[1] - p0[1])
 	d1 := (p1[0] - p0[0]) / (p1[1] - p0[1])
-	fmt.Printf("d0: %.2f, d1: %.2f\n", d0, d1)
+
+	z0 := p0[2]
+	z1 := z0
+	dz0 := (p2[2] - p0[2]) / (p2[1] - p0[1])
+	dz1 := (p1[2] - p0[2]) / (p1[1] - p0[1])
 	for y := int(p0[1]); y < int(p1[1]); y++ {
-		image.DrawLine(c, int(x0), y, int(x1), y)
+		fmt.Println("Running BM")
+		image.DrawLine(c, int(x0), y, z0, int(x1), y, z1)
 		x0 += d0
 		x1 += d1
+		z0 += dz0
+		z1 += dz1
 	}
 
 	// MT
 	x1 = p1[0]
 	d0 = (p2[0] - p0[0]) / (p2[1] - p0[1])
 	d1 = (p2[0] - p1[0]) / (p2[1] - p1[1])
-	fmt.Printf("d0: %.2f, d1: %.2f\n", d0, d1)
+
+	z1 = p1[2]
+	d1 = (p2[2] - p1[2]) / (p2[1] - p1[1])
 	for y := int(p1[1]); y < int(p2[1]); y++ {
-		image.DrawLine(c, int(x0), y, int(x1), y)
+		fmt.Println("Running MT")
+		image.DrawLine(c, int(x0), y, z0, int(x1), y, z1)
 		x0 += d0
 		x1 += d1
+		z0 += dz0
+		z1 += dz1
 	}
 }
 
 func (image Image) DrawLines(edges *Matrix, c Color) {
 	m := edges.mat
 	for i := 0; i < edges.cols-1; i += 2 {
-		image.DrawLine(c, int(m[0][i]), int(m[1][i]), int(m[0][i+1]), int(m[1][i+1]))
+		image.DrawLine(c, int(m[0][i]), int(m[1][i]), m[2][i], int(m[0][i+1]), int(m[1][i+1]), m[2][i+1])
 	}
 }
 
@@ -110,12 +122,15 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 	deltaY := y1 - y0
 	lA := deltaY
 	lB := deltaX * -1
+	z := z0
 	if deltaY >= 0 {
 		if math.Abs(float64(deltaY)) <= math.Abs(float64(deltaX)) {
 			// Octant 1 and 5
+			y := y0
 			lD := 2*lA + lB
+			dz := (z1 - z0) / float64(x1-x0)
 			for x := x0; x <= x1; x++ {
-				err := image.plot(c, x, y)
+				err := image.plot(c, x, y, z)
 				if err != nil {
 					return err
 				}
@@ -124,13 +139,15 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 					lD += 2 * lB
 				}
 				lD += 2 * lA
+				z += dz
 			}
 		} else {
 			// Octant 2 and 6
 			x := x0
 			lD := lA + 2*lB
+			dz := (z1 - z0) / float64(y1-y0)
 			for y := y0; y <= y1; y++ {
-				err := image.plot(c, x, y)
+				err := image.plot(c, x, y, z)
 				if err != nil {
 					return err
 				}
@@ -139,6 +156,7 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 					lD += 2 * lA
 				}
 				lD += 2 * lB
+				z += dz
 			}
 		}
 	} else {
@@ -146,8 +164,9 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 			// Octant 7 and 3
 			x := x0
 			lD := lA - 2*lB
+			dz := (z1 - z0) / float64(y1-y0)
 			for y := y0; y >= y1; y-- {
-				err := image.plot(c, x, y)
+				err := image.plot(c, x, y, z)
 				if err != nil {
 					return err
 				}
@@ -156,13 +175,15 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 					lD += 2 * lA
 				}
 				lD -= 2 * lB
+				z += dz
 			}
 		} else {
 			// Octant 8 and 4
 			y := y0
 			lD := 2*lA - lB
+			dz := (z1 - z0) / float64(x1-x0)
 			for x := x0; x <= x1; x++ {
-				err := image.plot(c, x, y)
+				err := image.plot(c, x, y, z)
 				if err != nil {
 					return err
 				}
@@ -171,6 +192,7 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 					lD -= 2 * lB
 				}
 				lD += 2 * lA
+				z += dz
 			}
 		}
 	}
