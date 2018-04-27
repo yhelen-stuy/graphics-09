@@ -28,6 +28,9 @@ func MakeImage(height, width int) *Image {
 	for i := range img {
 		img[i] = make([]Color, width)
 		zBuf[i] = make([]float64, width)
+		for j := range zBuf[i] {
+			zBuf[i][j] = -1 * math.MaxFloat64
+		}
 	}
 	image := &Image{
 		img:    img,
@@ -44,7 +47,7 @@ func (image Image) plot(c Color, x, y int, z float64) error {
 	if x < 0 || x > image.height || y < 0 || y > image.width {
 		return errors.New("Error: Coordinate invalid")
 	}
-	if math.IsNaN(image.zBuf[x][y]) || z > image.zBuf[x][y] {
+	if z > image.zBuf[x][y] {
 		image.img[x][y] = c
 		image.zBuf[x][y] = z
 	}

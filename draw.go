@@ -122,6 +122,7 @@ func (image Image) DrawLine(c Color, x0, y0 int, z0 float64, x1, y1 int, z1 floa
 	if x0 > x1 {
 		x1, x0 = x0, x1
 		y1, y0 = y0, y1
+		z1, z0 = z0, z1
 	}
 
 	deltaX := x1 - x0
