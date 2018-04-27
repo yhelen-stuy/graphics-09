@@ -1,0 +1,112 @@
+# Lines
+push
+line
+50 450 0 50 499 0
+line
+51 450 0 51 499 0
+line
+52 450 0 52 499 0
+line
+325 450 0 325 499 0
+line
+326 450 0 326 499 0
+line
+327 450 0 327 499 0
+pop
+# Left ring
+push
+move
+50 400 0
+rotate
+y -15
+rotate
+z 90
+torus
+0 0 0 5 50
+pop
+# Right ring
+push
+move
+340 400 0
+rotate
+y -15
+rotate
+z 90
+torus
+0 0 50 5 50
+pop
+# BODY
+push
+scale
+.75 .75 .75
+move
+250 200 0
+rotate
+y -30
+push
+box
+-100 125 50 200 250 100
+#HEAD
+move
+0 175 0
+rotate
+y 90
+sphere
+0 0 0 50
+pop
+#LEFT ARM
+push
+move
+-125 125 0
+rotate
+z -155
+box
+-40 0 40 40 100 80
+#LEFT LOWER ARM
+push
+move
+-20 -100 0
+box
+-10 0 10 20 125 20
+pop
+pop
+#RIGHT ARM
+push
+move
+150 125 0
+rotate
+z 150
+box
+0 0 40 40 100 80
+#RIGHT LOWER ARM
+push
+move
+20 -100 0
+rotate
+x -20
+rotate
+y 150
+box
+-10 0 10 20 125 20
+pop
+pop
+#LEFT LEG
+push
+move
+-200 -125 0
+rotate
+x 75
+box
+0 0 40 50 120 80
+pop
+# #RIGHT LEG
+push
+move
+140 -125 180
+rotate
+x 75
+box
+-50 0 40 50 120 80
+display
+save
+gymnast.ppm

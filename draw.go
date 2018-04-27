@@ -43,9 +43,9 @@ func (image Image) DrawPolygons(p *Matrix, c Color) {
 				g: cnew.g + 41%255,
 				b: cnew.b + 59%255,
 			}
-			image.DrawLine(cnew, int(p0[0]), int(p0[1]), p0[2], int(p1[0]), int(p1[1]), p1[2])
-			image.DrawLine(cnew, int(p1[0]), int(p1[1]), p1[2], int(p2[0]), int(p2[1]), p2[2])
-			image.DrawLine(cnew, int(p2[0]), int(p2[1]), p2[2], int(p0[0]), int(p0[1]), p0[2])
+			// image.DrawLine(cnew, int(p0[0]), int(p0[1]), p0[2], int(p1[0]), int(p1[1]), p1[2])
+			// image.DrawLine(cnew, int(p1[0]), int(p1[1]), p1[2], int(p2[0]), int(p2[1]), p2[2])
+			// image.DrawLine(cnew, int(p2[0]), int(p2[1]), p2[2], int(p0[0]), int(p0[1]), p0[2])
 			image.scanline(p0, p1, p2, cnew)
 		}
 	}
